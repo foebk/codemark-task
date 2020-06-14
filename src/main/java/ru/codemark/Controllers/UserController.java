@@ -41,10 +41,10 @@ public class UserController {
     }
 
     @DeleteMapping("/delete")
-    public String deleteUserByLogin(@RequestParam String login) {
-        String msg = usersService.deleteUser(login);
+    public DataErrorModel deleteUserByLogin(@RequestParam String login) {
+        DataErrorModel dataErrorModel = usersService.deleteUser(login);
 
-        return msg;
+        return dataErrorModel;
     }
 
     @PutMapping("/edit")

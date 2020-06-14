@@ -68,13 +68,12 @@ public class UsersServiceImpl implements UsersService {
 
     @Override
     public DataErrorModel addUser(UserAddModel user) {
-        List<String> errors = dataValidation(user);
         List<String> allUsers = usersRepository.findLogins();
-
-        if (allUsers.stream().anyMatch(u -> u.equals(user.getName()))) {
+        if (allUsers.stream().anyMatch(u -> u.equals(user.getLogin()))) {
             return new DataErrorModel(false, Collections.singletonList("User with this login already exists"));
         }
 
+        List<String> errors = dataValidation(user);
         if (errors.size() != 0) {
             return new DataErrorModel(false, errors);
         }
@@ -95,10 +94,13 @@ public class UsersServiceImpl implements UsersService {
 
     @Override
     @Transactional
-    public String deleteUser(String login) {
-        usersRepository.deleteByLogin(login);
+    public DataErrorModel deleteUser(String login) {
+        if (usersRepository.findLogins().stream().anyMatch(u -> u.equals(login))) {
+            usersRepository.deleteByLogin(login);
+            return new DataErrorModel(true, null);
+        };
 
-        return "Entity was deleted or didn't exist";
+        return new DataErrorModel(false, Collections.singletonList("User with this login does not exist"));
     }
 
     @Override
@@ -107,7 +109,7 @@ public class UsersServiceImpl implements UsersService {
         UserEntity user = usersRepository.findByLogin(userAddModel.getLogin());
 
         if (userAddModel.getName() != null) {
-            if (user.getName().length() == 0) {
+            if (userAddModel.getName().length() == 0) {
                 errors.add("New name is empty");
             } else {
                 user.setName(userAddModel.getName());
@@ -115,13 +117,18 @@ public class UsersServiceImpl implements UsersService {
         }
 
         if (userAddModel.getPassword() != null) {
-            List<String> passwordValidationErrors = passwordValidation(user.getPassword());
-
-            if (passwordValidationErrors.size() == 0) {
-                user.setPassword(userAddModel.getPassword());
+            if (userAddModel.getPassword().length() == 0) {
+                errors.addAll(Arrays.asList("Password is empty", "Password must contain at least one number",
+                        "Password must contain at least one uppercase letter"));
             }
             else {
-                errors.addAll(passwordValidationErrors);
+                List<String> passwordValidationErrors = passwordValidation(userAddModel.getPassword());
+
+                if (passwordValidationErrors.size() == 0) {
+                    user.setPassword(userAddModel.getPassword());
+                } else {
+                    errors.addAll(passwordValidationErrors);
+                }
             }
         }
 
