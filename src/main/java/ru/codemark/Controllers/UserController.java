@@ -1,9 +1,9 @@
 package ru.codemark.Controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import ru.codemark.Models.UserAddModel;
+import ru.codemark.Models.UserModel;
 import ru.codemark.Models.UserWithoutRolesModel;
 import ru.codemark.Services.UsersService;
 
@@ -23,5 +23,17 @@ public class UserController {
         List<UserWithoutRolesModel> userWithoutRolesModel = usersService.getUsersList();
 
         return userWithoutRolesModel;
+    }
+
+    @GetMapping("/get")
+    public UserModel getUserByLogin(@RequestParam(name = "login") String login) {
+        UserModel userModel = usersService.getUser(login);
+
+        return userModel;
+    }
+
+    @PostMapping("/add")
+    public void addNewUser(@RequestBody UserAddModel newUser) {
+        usersService.addUser(newUser);
     }
 }

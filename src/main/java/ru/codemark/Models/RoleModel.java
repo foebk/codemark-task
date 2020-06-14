@@ -1,10 +1,10 @@
 package ru.codemark.Models;
 
-public class RolesModel {
+public class RoleModel {
     private int id;
     private String name;
 
-    public RolesModel(int id, String name) {
+    public RoleModel(int id, String name) {
         this.id = id;
         this.name = name;
     }

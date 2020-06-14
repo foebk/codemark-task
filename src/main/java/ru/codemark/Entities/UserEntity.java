@@ -54,4 +54,12 @@ public class UserEntity {
     public void setPassword(String password) {
         this.password = password;
     }
+
+    public Set<RolesListEntity> getRolesListEntities() {
+        return rolesListEntities;
+    }
+
+    public void setRolesListEntities(Set<RolesListEntity> rolesListEntities) {
+        this.rolesListEntities = rolesListEntities;
+    }
 }
