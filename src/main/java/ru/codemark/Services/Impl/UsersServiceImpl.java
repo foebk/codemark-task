@@ -3,10 +3,7 @@ package ru.codemark.Services.Impl;
 import org.springframework.stereotype.Service;
 import ru.codemark.Entities.RolesListEntity;
 import ru.codemark.Entities.UserEntity;
-import ru.codemark.Models.RoleModel;
-import ru.codemark.Models.UserAddModel;
-import ru.codemark.Models.UserModel;
-import ru.codemark.Models.UserWithoutRolesModel;
+import ru.codemark.Models.*;
 import ru.codemark.Repos.RolesListRepository;
 import ru.codemark.Repos.UsersRepository;
 import ru.codemark.Services.UsersService;
@@ -69,7 +66,12 @@ public class UsersServiceImpl implements UsersService {
     }
 
     @Override
-    public void addUser(UserAddModel user) {
+    public DataErrorModel addUser(UserAddModel user) {
+        List<String> errors = dataValidation(user);
+        if (errors.size() != 0) {
+            return new DataErrorModel(false, errors);
+        }
+
         List<RolesListEntity> allRoles = rolesListRepository.findAll();
 
         UserEntity userEntity = new UserEntity();
@@ -89,19 +91,38 @@ public class UsersServiceImpl implements UsersService {
 
         usersRepository.save(userEntity);
 
-        return;
+        return new DataErrorModel(true, null);
     }
 
-    private boolean passwordValidation(String password) {
+    private List<String> dataValidation(UserAddModel user) {
+        List<String> errors = passwordValidation(user.getPassword());
+        if (user.getName() == null || user.getName().length() == 0) {
+            errors.add("Name is empty");
+        }
+        if (user.getLogin() == null || user.getLogin().length() == 0) {
+            errors.add("Login is empty");
+        }
+
+        return errors;
+    }
+
+    private List<String> passwordValidation(String password) {
+        List<String> errors = new ArrayList<>();
+        if (password == null || password.length() == 0) {
+            errors.addAll(Arrays.asList("Password is empty", "Password must contain at least one number",
+                    "Password must contain at least one uppercase letter"));
+            return errors;
+        }
+
         Pattern[] patterns = new Pattern[2];
         patterns[0] = Pattern.compile("[A-Z]+");
         patterns[1] = Pattern.compile("[0-9]+");
-        for (Pattern pattern : patterns) {
-            Matcher matcher = pattern.matcher(password);
+        for (int i = 0; i < 2; i++) {
+            Matcher matcher = patterns[i].matcher(password);
             if (!matcher.find()) {
-                return false;
+                errors.add(i == 0 ? "Password must contain at least one number" : "Password must contain at least one uppercase letter");
             }
         }
-        return true;
+        return errors;
     }
 }

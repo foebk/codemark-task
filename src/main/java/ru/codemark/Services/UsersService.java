@@ -1,5 +1,6 @@
 package ru.codemark.Services;
 
+import ru.codemark.Models.DataErrorModel;
 import ru.codemark.Models.UserAddModel;
 import ru.codemark.Models.UserModel;
 import ru.codemark.Models.UserWithoutRolesModel;
@@ -11,5 +12,5 @@ public interface UsersService {
 
     UserModel getUser(String login);
 
-    void addUser(UserAddModel user);
+    DataErrorModel addUser(UserAddModel user);
 }

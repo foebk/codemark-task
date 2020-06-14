@@ -2,6 +2,7 @@ package ru.codemark.Controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import ru.codemark.Models.DataErrorModel;
 import ru.codemark.Models.UserAddModel;
 import ru.codemark.Models.UserModel;
 import ru.codemark.Models.UserWithoutRolesModel;
@@ -33,7 +34,9 @@ public class UserController {
     }
 
     @PostMapping("/add")
-    public void addNewUser(@RequestBody UserAddModel newUser) {
-        usersService.addUser(newUser);
+    public DataErrorModel addNewUser(@RequestBody UserAddModel newUser) {
+        DataErrorModel dataErrorModel = usersService.addUser(newUser);
+
+        return dataErrorModel;
     }
 }
