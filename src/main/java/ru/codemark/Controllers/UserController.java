@@ -46,4 +46,11 @@ public class UserController {
 
         return msg;
     }
+
+    @PutMapping("/edit")
+    public DataErrorModel editUser(@RequestBody UserAddModel user) {
+        DataErrorModel dataErrorModel = usersService.editUser(user);
+
+        return dataErrorModel;
+    }
 }

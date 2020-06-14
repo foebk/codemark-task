@@ -44,12 +44,12 @@ public class UsersServiceImpl implements UsersService {
 
     @Override
     public UserModel getUser(String login) {
-        UserEntity user = usersRepository.findAllByLogin(login);
+        UserEntity user = usersRepository.findByLogin(login);
         if (user == null) {
             return null;
         }
         UserModel newUser = new UserModel();
-        
+
         newUser.setId(user.getId());
         newUser.setName(user.getName());
         newUser.setLogin(user.getLogin());
@@ -69,24 +69,22 @@ public class UsersServiceImpl implements UsersService {
     @Override
     public DataErrorModel addUser(UserAddModel user) {
         List<String> errors = dataValidation(user);
+        List<String> allUsers = usersRepository.findLogins();
+
+        if (allUsers.stream().anyMatch(u -> u.equals(user.getName()))) {
+            return new DataErrorModel(false, Collections.singletonList("User with this login already exists"));
+        }
+
         if (errors.size() != 0) {
             return new DataErrorModel(false, errors);
         }
-
-        List<RolesListEntity> allRoles = rolesListRepository.findAll();
 
         UserEntity userEntity = new UserEntity();
         userEntity.setName(user.getName());
         userEntity.setLogin(user.getLogin());
         userEntity.setPassword(user.getPassword());
 
-        Set<RolesListEntity> rolesListEntities = Arrays.stream(user.getRoles()).mapToObj(role -> {
-            RolesListEntity rolesListEntity = new RolesListEntity();
-            rolesListEntity.setId(role);
-            rolesListEntity.setName(allRoles.get(role - 1).getName());
-
-            return rolesListEntity;
-        }).collect(Collectors.toSet());
+        Set<RolesListEntity> rolesListEntities = roleNumsToRolesListEntity(user.getRoles());
 
         userEntity.setRolesListEntities(rolesListEntities);
 
@@ -103,13 +101,56 @@ public class UsersServiceImpl implements UsersService {
         return "Entity was deleted or didn't exist";
     }
 
+    @Override
+    public DataErrorModel editUser(UserAddModel userAddModel) {
+        List<String> errors = new ArrayList<>();
+        UserEntity user = usersRepository.findByLogin(userAddModel.getLogin());
+
+        if (userAddModel.getName() != null) {
+            if (user.getName().length() == 0) {
+                errors.add("New name is empty");
+            } else {
+                user.setName(userAddModel.getName());
+            }
+        }
+
+        if (userAddModel.getPassword() != null) {
+            List<String> passwordValidationErrors = passwordValidation(user.getPassword());
+
+            if (passwordValidationErrors.size() == 0) {
+                user.setPassword(userAddModel.getPassword());
+            }
+            else {
+                errors.addAll(passwordValidationErrors);
+            }
+        }
+
+        if (errors.size() != 0) {
+            return new DataErrorModel(false, errors);
+        }
+
+        user.setRolesListEntities(roleNumsToRolesListEntity(userAddModel.getRoles()));
+        usersRepository.save(user);
+        return new DataErrorModel(true, null);
+    }
+
     private List<String> dataValidation(UserAddModel user) {
-        List<String> errors = passwordValidation(user.getPassword());
+        List<String> errors = new ArrayList<>();
+
         if (user.getName() == null || user.getName().length() == 0) {
             errors.add("Name is empty");
         }
+
         if (user.getLogin() == null || user.getLogin().length() == 0) {
             errors.add("Login is empty");
+        }
+
+        if (user.getPassword() == null || user.getPassword().length() == 0) {
+            errors.addAll(Arrays.asList("Password is empty", "Password must contain at least one number",
+                    "Password must contain at least one uppercase letter"));
+        }
+        else {
+            errors.addAll(passwordValidation(user.getPassword()));
         }
 
         return errors;
@@ -117,11 +158,6 @@ public class UsersServiceImpl implements UsersService {
 
     private List<String> passwordValidation(String password) {
         List<String> errors = new ArrayList<>();
-        if (password == null || password.length() == 0) {
-            errors.addAll(Arrays.asList("Password is empty", "Password must contain at least one number",
-                    "Password must contain at least one uppercase letter"));
-            return errors;
-        }
 
         Pattern[] patterns = new Pattern[2];
         patterns[0] = Pattern.compile("[A-Z]+");
@@ -133,5 +169,20 @@ public class UsersServiceImpl implements UsersService {
             }
         }
         return errors;
+    }
+
+    private Set<RolesListEntity> roleNumsToRolesListEntity(int[] roles) {
+        List<RolesListEntity> allRoles = rolesListRepository.findAll();
+
+        if (roles == null) {
+            return new HashSet<>(0);
+        }
+
+        return Arrays.stream(roles).mapToObj(role -> {
+            RolesListEntity rolesListEntity = new RolesListEntity();
+            rolesListEntity.setId(role);
+            rolesListEntity.setName(allRoles.get(role - 1).getName());
+            return rolesListEntity;
+        }).collect(Collectors.toSet());
     }
 }

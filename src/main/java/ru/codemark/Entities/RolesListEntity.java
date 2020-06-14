@@ -1,6 +1,7 @@
 package ru.codemark.Entities;
 
 import javax.persistence.*;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity(name = "roles_list")

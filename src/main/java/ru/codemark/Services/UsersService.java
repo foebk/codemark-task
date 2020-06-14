@@ -14,5 +14,7 @@ public interface UsersService {
 
     DataErrorModel addUser(UserAddModel user);
 
+    DataErrorModel editUser(UserAddModel user);
+
     String deleteUser(String login);
 }
