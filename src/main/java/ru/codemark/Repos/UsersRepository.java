@@ -11,4 +11,6 @@ public interface UsersRepository extends CrudRepository<UserEntity, Integer> {
     List<UserEntity> findAll();
 
     UserEntity findAllByLogin(String login);
+
+    void deleteByLogin(String login);
 }

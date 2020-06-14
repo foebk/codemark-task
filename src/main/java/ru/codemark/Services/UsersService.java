@@ -13,4 +13,6 @@ public interface UsersService {
     UserModel getUser(String login);
 
     DataErrorModel addUser(UserAddModel user);
+
+    String deleteUser(String login);
 }

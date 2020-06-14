@@ -1,6 +1,7 @@
 package ru.codemark.Services.Impl;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.codemark.Entities.RolesListEntity;
 import ru.codemark.Entities.UserEntity;
 import ru.codemark.Models.*;
@@ -92,6 +93,14 @@ public class UsersServiceImpl implements UsersService {
         usersRepository.save(userEntity);
 
         return new DataErrorModel(true, null);
+    }
+
+    @Override
+    @Transactional
+    public String deleteUser(String login) {
+        usersRepository.deleteByLogin(login);
+
+        return "Entity was deleted or didn't exist";
     }
 
     private List<String> dataValidation(UserAddModel user) {

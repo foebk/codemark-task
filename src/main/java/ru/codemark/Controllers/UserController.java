@@ -39,4 +39,11 @@ public class UserController {
 
         return dataErrorModel;
     }
+
+    @DeleteMapping("/delete")
+    public String deleteUserByLogin(@RequestParam String login) {
+        String msg = usersService.deleteUser(login);
+
+        return msg;
+    }
 }
