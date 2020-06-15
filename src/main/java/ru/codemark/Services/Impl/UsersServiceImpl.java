@@ -1,5 +1,6 @@
 package ru.codemark.Services.Impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.codemark.Entities.RolesListEntity;
@@ -19,6 +20,7 @@ public class UsersServiceImpl implements UsersService {
     private final UsersRepository usersRepository;
     private final RolesListRepository rolesListRepository;
 
+    @Autowired
     public UsersServiceImpl(UsersRepository usersRepository, RolesListRepository rolesListRepository) {
         this.usersRepository = usersRepository;
         this.rolesListRepository = rolesListRepository;
@@ -98,7 +100,8 @@ public class UsersServiceImpl implements UsersService {
         if (usersRepository.findLogins().stream().anyMatch(u -> u.equals(login))) {
             usersRepository.deleteByLogin(login);
             return new DataErrorModel(true, null);
-        };
+        }
+        ;
 
         return new DataErrorModel(false, Collections.singletonList("User with this login does not exist"));
     }
@@ -107,6 +110,10 @@ public class UsersServiceImpl implements UsersService {
     public DataErrorModel editUser(UserAddModel userAddModel) {
         List<String> errors = new ArrayList<>();
         UserEntity user = usersRepository.findByLogin(userAddModel.getLogin());
+
+        if (usersRepository.findLogins().stream().noneMatch(u -> u.equals(userAddModel.getLogin()))) {
+            return new DataErrorModel(false, Collections.singletonList("User with this login does not exist"));
+        }
 
         if (userAddModel.getName() != null) {
             if (userAddModel.getName().length() == 0) {
@@ -120,8 +127,7 @@ public class UsersServiceImpl implements UsersService {
             if (userAddModel.getPassword().length() == 0) {
                 errors.addAll(Arrays.asList("Password is empty", "Password must contain at least one number",
                         "Password must contain at least one uppercase letter"));
-            }
-            else {
+            } else {
                 List<String> passwordValidationErrors = passwordValidation(userAddModel.getPassword());
 
                 if (passwordValidationErrors.size() == 0) {
@@ -155,8 +161,7 @@ public class UsersServiceImpl implements UsersService {
         if (user.getPassword() == null || user.getPassword().length() == 0) {
             errors.addAll(Arrays.asList("Password is empty", "Password must contain at least one number",
                     "Password must contain at least one uppercase letter"));
-        }
-        else {
+        } else {
             errors.addAll(passwordValidation(user.getPassword()));
         }
 
