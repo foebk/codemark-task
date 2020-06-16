@@ -5,6 +5,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.codemark.Entities.UserEntity;
+import ru.codemark.ErrorMessages;
 import ru.codemark.Models.DataErrorModel;
 import ru.codemark.Models.UserAddModel;
 import ru.codemark.Repos.RolesListRepository;
@@ -24,7 +25,6 @@ public class UsersServiceImplTest {
     @Mock
     private RolesListRepository rolesListRepository;
 
-    @Autowired
     private UsersService usersService;
 
     public UsersServiceImplTest() {
@@ -44,8 +44,6 @@ public class UsersServiceImplTest {
 
         UserEntity userEntity = new UserEntity();
 
-        given(usersRepository.save(userEntity)).willReturn(null);
-
         DataErrorModel expected = new DataErrorModel(true, null);
         DataErrorModel actual = usersService.addUser(userAddModel);
 
@@ -62,7 +60,7 @@ public class UsersServiceImplTest {
         userAddModel.setPassword("Test1");
         userAddModel.setLogin("Check");
 
-        DataErrorModel expected = new DataErrorModel(false, Collections.singletonList("Name is empty"));
+        DataErrorModel expected = new DataErrorModel(false, Collections.singletonList(ErrorMessages.EMPTY_NAME));
         DataErrorModel actual = usersService.addUser(userAddModel);
 
         assertEquals(expected, actual);
@@ -78,7 +76,7 @@ public class UsersServiceImplTest {
         userAddModel.setPassword("Test1");
         userAddModel.setLogin("");
 
-        DataErrorModel expected = new DataErrorModel(false, Collections.singletonList("Login is empty"));
+        DataErrorModel expected = new DataErrorModel(false, Collections.singletonList(ErrorMessages.EMPTY_LOGIN));
         DataErrorModel actual = usersService.addUser(userAddModel);
 
         assertEquals(expected, actual);
@@ -94,9 +92,8 @@ public class UsersServiceImplTest {
         userAddModel.setPassword("");
         userAddModel.setLogin("Check");
 
-        DataErrorModel expected = new DataErrorModel(false, Arrays.asList("Password is empty",
-                "Password must contain at least one number",
-                "Password must contain at least one uppercase letter"));
+        DataErrorModel expected = new DataErrorModel(false, Arrays.asList(ErrorMessages.EMPTY_PASSWORD,
+                ErrorMessages.PASSWORD_NUM, ErrorMessages.PASSWORD_UPPERCASE_LETTER));
         expected.getErrors().sort(String::compareTo);
 
         DataErrorModel actual = usersService.addUser(userAddModel);
@@ -115,8 +112,8 @@ public class UsersServiceImplTest {
         userAddModel.setPassword("test");
         userAddModel.setLogin("Check");
 
-        DataErrorModel expected = new DataErrorModel(false, Arrays.asList("Password must contain at least one number",
-                "Password must contain at least one uppercase letter"));
+        DataErrorModel expected = new DataErrorModel(false, Arrays.asList(ErrorMessages.PASSWORD_NUM,
+                ErrorMessages.PASSWORD_UPPERCASE_LETTER));
         expected.getErrors().sort(String::compareTo);
 
         DataErrorModel actual = usersService.addUser(userAddModel);
@@ -131,11 +128,9 @@ public class UsersServiceImplTest {
 
         UserAddModel userAddModel = new UserAddModel();
 
-        DataErrorModel expected = new DataErrorModel(false, Arrays.asList("Password must contain at least one number",
-                "Password must contain at least one uppercase letter",
-                "Name is empty",
-                "Login is empty",
-                "Password is empty"));
+        DataErrorModel expected = new DataErrorModel(false, Arrays.asList(ErrorMessages.EMPTY_NAME,
+                ErrorMessages.EMPTY_LOGIN, ErrorMessages.EMPTY_PASSWORD, ErrorMessages.PASSWORD_NUM,
+                ErrorMessages.PASSWORD_UPPERCASE_LETTER));
         expected.getErrors().sort(String::compareTo);
 
         DataErrorModel actual = usersService.addUser(userAddModel);
@@ -156,19 +151,30 @@ public class UsersServiceImplTest {
         userAddModel.setPassword("Test1");
         userAddModel.setLogin("Check");
 
-        DataErrorModel expected = new DataErrorModel(false, Collections.singletonList("User with this login already exists"));
+        DataErrorModel expected = new DataErrorModel(false, Collections.singletonList(ErrorMessages.USER_EXIST));
         DataErrorModel actual = usersService.addUser(userAddModel);
 
         assertEquals(expected, actual);
     }
 
     @Test
-    public void addUserWithPasswordWithoutUpperCaseLetter() {
+    public void deleteUserSuccess() {
+        given(usersRepository.findLogins()).willReturn(Collections.singletonList("Check"));
 
+        DataErrorModel actual = new DataErrorModel(true, null);
+        DataErrorModel expected = usersService.deleteUser("Check");
+
+        assertEquals(expected, actual);
     }
 
     @Test
-    public void deleteUser() {
+    public void deleteUserFailure() {
+        given(usersRepository.findLogins()).willReturn(Collections.emptyList());
+
+        DataErrorModel actual = new DataErrorModel(false, Collections.singletonList(ErrorMessages.USER_DOESNT_EXIST));
+        DataErrorModel expected = usersService.deleteUser("Check");
+
+        assertEquals(expected, actual);
     }
 
     @Test

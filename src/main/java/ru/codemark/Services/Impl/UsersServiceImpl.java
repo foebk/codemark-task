@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.codemark.Entities.RolesListEntity;
 import ru.codemark.Entities.UserEntity;
+import ru.codemark.ErrorMessages;
 import ru.codemark.Models.*;
 import ru.codemark.Repos.RolesListRepository;
 import ru.codemark.Repos.UsersRepository;
@@ -72,7 +73,7 @@ public class UsersServiceImpl implements UsersService {
     public DataErrorModel addUser(UserAddModel user) {
         List<String> allUsers = usersRepository.findLogins();
         if (allUsers.stream().anyMatch(u -> u.equals(user.getLogin()))) {
-            return new DataErrorModel(false, Collections.singletonList("User with this login already exists"));
+            return new DataErrorModel(false, Collections.singletonList(ErrorMessages.USER_EXIST));
         }
 
         List<String> errors = dataValidation(user);
@@ -103,7 +104,7 @@ public class UsersServiceImpl implements UsersService {
         }
         ;
 
-        return new DataErrorModel(false, Collections.singletonList("User with this login does not exist"));
+        return new DataErrorModel(false, Collections.singletonList(ErrorMessages.USER_DOESNT_EXIST));
     }
 
     @Override
@@ -112,12 +113,12 @@ public class UsersServiceImpl implements UsersService {
         UserEntity user = usersRepository.findByLogin(userAddModel.getLogin());
 
         if (usersRepository.findLogins().stream().noneMatch(u -> u.equals(userAddModel.getLogin()))) {
-            return new DataErrorModel(false, Collections.singletonList("User with this login does not exist"));
+            return new DataErrorModel(false, Collections.singletonList(ErrorMessages.USER_DOESNT_EXIST));
         }
 
         if (userAddModel.getName() != null) {
             if (userAddModel.getName().length() == 0) {
-                errors.add("New name is empty");
+                errors.add(ErrorMessages.EMPTY_NAME);
             } else {
                 user.setName(userAddModel.getName());
             }
@@ -125,8 +126,8 @@ public class UsersServiceImpl implements UsersService {
 
         if (userAddModel.getPassword() != null) {
             if (userAddModel.getPassword().length() == 0) {
-                errors.addAll(Arrays.asList("Password is empty", "Password must contain at least one number",
-                        "Password must contain at least one uppercase letter"));
+                errors.addAll(Arrays.asList(ErrorMessages.EMPTY_PASSWORD, ErrorMessages.PASSWORD_NUM,
+                        ErrorMessages.PASSWORD_UPPERCASE_LETTER));
             } else {
                 List<String> passwordValidationErrors = passwordValidation(userAddModel.getPassword());
 
@@ -151,16 +152,16 @@ public class UsersServiceImpl implements UsersService {
         List<String> errors = new ArrayList<>();
 
         if (user.getName() == null || user.getName().length() == 0) {
-            errors.add("Name is empty");
+            errors.add(ErrorMessages.EMPTY_NAME);
         }
 
         if (user.getLogin() == null || user.getLogin().length() == 0) {
-            errors.add("Login is empty");
+            errors.add(ErrorMessages.EMPTY_LOGIN);
         }
 
         if (user.getPassword() == null || user.getPassword().length() == 0) {
-            errors.addAll(Arrays.asList("Password is empty", "Password must contain at least one number",
-                    "Password must contain at least one uppercase letter"));
+            errors.addAll(Arrays.asList(ErrorMessages.EMPTY_PASSWORD, ErrorMessages.PASSWORD_NUM,
+                    ErrorMessages.PASSWORD_UPPERCASE_LETTER));
         } else {
             errors.addAll(passwordValidation(user.getPassword()));
         }
@@ -177,7 +178,7 @@ public class UsersServiceImpl implements UsersService {
         for (int i = 0; i < 2; i++) {
             Matcher matcher = patterns[i].matcher(password);
             if (!matcher.find()) {
-                errors.add(i == 0 ? "Password must contain at least one number" : "Password must contain at least one uppercase letter");
+                errors.add(i == 0 ? ErrorMessages.PASSWORD_NUM : ErrorMessages.PASSWORD_UPPERCASE_LETTER);
             }
         }
         return errors;
