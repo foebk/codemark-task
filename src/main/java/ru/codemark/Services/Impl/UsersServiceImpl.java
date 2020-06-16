@@ -112,7 +112,7 @@ public class UsersServiceImpl implements UsersService {
         List<String> errors = new ArrayList<>();
         UserEntity user = usersRepository.findByLogin(userAddModel.getLogin());
 
-        if (usersRepository.findLogins().stream().noneMatch(u -> u.equals(userAddModel.getLogin()))) {
+        if (user == null) {
             return new DataErrorModel(false, Collections.singletonList(ErrorMessages.USER_DOESNT_EXIST));
         }
 
@@ -178,7 +178,7 @@ public class UsersServiceImpl implements UsersService {
         for (int i = 0; i < 2; i++) {
             Matcher matcher = patterns[i].matcher(password);
             if (!matcher.find()) {
-                errors.add(i == 0 ? ErrorMessages.PASSWORD_NUM : ErrorMessages.PASSWORD_UPPERCASE_LETTER);
+                errors.add(i == 0 ? ErrorMessages.PASSWORD_UPPERCASE_LETTER : ErrorMessages.PASSWORD_NUM);
             }
         }
         return errors;
@@ -191,7 +191,7 @@ public class UsersServiceImpl implements UsersService {
             return new HashSet<>(0);
         }
 
-        return Arrays.stream(roles).mapToObj(role -> {
+        return Arrays.stream(roles).filter(role -> role <= allRoles.size()).mapToObj(role -> {
             RolesListEntity rolesListEntity = new RolesListEntity();
             rolesListEntity.setId(role);
             rolesListEntity.setName(allRoles.get(role - 1).getName());
