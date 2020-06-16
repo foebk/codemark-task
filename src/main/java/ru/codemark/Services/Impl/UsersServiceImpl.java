@@ -102,7 +102,6 @@ public class UsersServiceImpl implements UsersService {
             usersRepository.deleteByLogin(login);
             return new DataErrorModel(true, null);
         }
-        ;
 
         return new DataErrorModel(false, Collections.singletonList(ErrorMessages.USER_DOESNT_EXIST));
     }
@@ -143,7 +142,11 @@ public class UsersServiceImpl implements UsersService {
             return new DataErrorModel(false, errors);
         }
 
-        user.setRolesListEntities(roleNumsToRolesListEntity(userAddModel.getRoles()));
+        Set<RolesListEntity> rolesListEntities = roleNumsToRolesListEntity(userAddModel.getRoles());
+        if (rolesListEntities != null) {
+            user.setRolesListEntities(rolesListEntities);
+        }
+
         usersRepository.save(user);
         return new DataErrorModel(true, null);
     }
@@ -185,16 +188,21 @@ public class UsersServiceImpl implements UsersService {
     }
 
     private Set<RolesListEntity> roleNumsToRolesListEntity(int[] roles) {
-        List<RolesListEntity> allRoles = rolesListRepository.findAll();
-
         if (roles == null) {
-            return new HashSet<>(0);
+            return Collections.emptySet();
         }
 
-        return Arrays.stream(roles).filter(role -> role <= allRoles.size()).mapToObj(role -> {
+        Map<Integer, String> collect = rolesListRepository.findAll().stream()
+                .collect(Collectors.toMap(RolesListEntity::getId, RolesListEntity::getName));
+
+        Integer max = collect.keySet().stream().max(Comparator.naturalOrder()).orElse(0);
+        Integer min = collect.keySet().stream().min(Comparator.naturalOrder()).orElse(0);
+
+        return Arrays.stream(roles).filter(role -> role >= min).filter(role -> role <= max).mapToObj(role -> {
             RolesListEntity rolesListEntity = new RolesListEntity();
             rolesListEntity.setId(role);
-            rolesListEntity.setName(allRoles.get(role - 1).getName());
+            rolesListEntity.setName(collect.get(role));
+
             return rolesListEntity;
         }).collect(Collectors.toSet());
     }
